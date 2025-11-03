@@ -23,7 +23,7 @@ def _get_timestamp():
     return str(int(time.time() * 1000))
 
 
-def _get_signed_headers(payload: dict | None = None):
+def _get_signed_headers(payload=None):
     """
     Creates a signature for a given payload (dict) and returns
     the correct headers for a SIGNED (RCL_TopLevelCheck) request.
