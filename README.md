@@ -5,7 +5,7 @@ You will know later
 Clone the repository:
 
 ```bash
-git clone https://github.com/NewtonHatesApples/FindUrCapitalKrooker.git](https://github.com/NewtonHatesApples/QuantHackathon2025.git
+git clone https://github.com/NewtonHatesApples/FindUrCapitalKrooker.git
 ```
 ```bash
 cd QuantHackathon2025
