@@ -92,3 +92,7 @@ class CryptoAPI:
         ohlcv = [candle for candle in ohlcv if candle[0] <= end_timestamp]
 
         return ohlcv
+
+
+if __name__ == "__main__":
+    print("Finally done this shit")

@@ -239,15 +239,4 @@ def get_all_ticker_id():
 
 
 if __name__ == "__main__":
-    print(get_all_ticker_id())
-    # Example 1: Place a LIMIT order (by providing a price)
-    # The function will correctly identify this as a LIMIT order.
-    place_order(pair_or_coin="BTC", side="SELL", quantity=0.01, price=99000)
-
-    # Example 2: Place a MARKET order (by not providing a price)
-    # The function will correctly identify this as a MARKET order.
-    place_order(pair_or_coin="BNB/USD", side="BUY", quantity=10)
-
-    # Example 3: Invalid order (LIMIT without a price)
-    # The function will catch this error before sending the request.
-    place_order(pair_or_coin="ETH", side="BUY", quantity=0.5, order_type="LIMIT") # Explicitly set, but no price given
+    print("Finally done this shit")
