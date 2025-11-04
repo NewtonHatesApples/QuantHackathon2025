@@ -165,6 +165,7 @@ def place_order(pair_or_coin, side, quantity, price=None, order_type=None):
 
     # 5. Get signed headers and the final request body
     headers, payload, total_params = _get_signed_headers(payload)
+    headers["Content-Type"] = "application/x-www-form-urlencoded"
 
     # 6. Send the request
     try:
