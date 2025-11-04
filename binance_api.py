@@ -3,7 +3,7 @@ import datetime
 from dateutil.relativedelta import relativedelta
 
 
-class CryptoAPI:
+class cryptoAPI:
     def __init__(self, exchange_name='binance'):
         """
         Initialize the API with a specific exchange.
