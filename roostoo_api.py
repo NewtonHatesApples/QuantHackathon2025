@@ -7,8 +7,8 @@ import hashlib
 
 class roostooAPI:
     BASE_URL = "https://mock-api.roostoo.com"
-    API_KEY = os.environ.get("ROOSTOO_API_KEY")
-    SECRET_KEY = os.environ.get("ROOSTOO_SECRET_KEY")
+    __API_KEY = os.environ.get("ROOSTOO_API_KEY")
+    __SECRET_KEY = os.environ.get("ROOSTOO_SECRET_KEY")
 
     SERVER_TIME_URL = BASE_URL + "/v3/serverTime"
     EXCHANGE_URL = BASE_URL + "/v3/exchangeInfo"
@@ -40,20 +40,18 @@ class roostooAPI:
 
         # 3. Create HMAC-SHA256 signature
         signature = hmac.new(
-            self.SECRET_KEY.encode('utf-8'),
+            self.__SECRET_KEY.encode('utf-8'),
             total_params.encode('utf-8'),
             hashlib.sha256
         ).hexdigest()
 
         # 4. Create headers
         headers = {
-            'RST-API-KEY': self.API_KEY,
+            'RST-API-KEY': self.__API_KEY,
             'MSG-SIGNATURE': signature
         }
 
         return headers, payload, total_params
-
-    # --- Now we can define functions for each API call ---
 
     def check_server_time(self):
         """Checks server time. (Auth: RCL_NoVerification)"""
@@ -65,7 +63,6 @@ class roostooAPI:
             print(f"Error checking server time: {e}")
             return None
 
-
     def get_exchange_info(self):
         """Gets exchange info. (Auth: RCL_NoVerification)"""
         try:
@@ -75,7 +72,6 @@ class roostooAPI:
         except requests.exceptions.RequestException as e:
             print(f"Error getting exchange info: {e}")
             return None
-
 
     def get_ticker(self, pair=None):
         """Gets market ticker. (Auth: RCL_TSCheck)"""
@@ -92,7 +88,6 @@ class roostooAPI:
         except requests.exceptions.RequestException as e:
             print(f"Error getting ticker: {e}")
             return None
-
 
     def get_balance(self):
         """Gets account balance. (Auth: RCL_TopLevelCheck)"""
@@ -111,7 +106,6 @@ class roostooAPI:
             print(f"Response text: {e.response.text if e.response else 'N/A'}")
             return None
 
-
     def get_pending_count(self):
         """Gets pending order count. (Auth: RCL_TopLevelCheck)"""
         headers, payload, total_params_string = self._get_signed_headers(payload={})
@@ -125,7 +119,6 @@ class roostooAPI:
             print(f"Response text: {e.response.text if e.response else 'N/A'}")
             return None
 
-
     def place_order(self, pair_or_coin, side, quantity, price=None, order_type=None):
         """
         Places a new order with improved flexibility and safety checks.
@@ -137,7 +130,7 @@ class roostooAPI:
             price (float, optional): The price for a LIMIT order. Defaults to None.
             order_type (str, optional): "LIMIT" or "MARKET". Auto-detected if not provided.
         """
-        print(f"\n--- Placing a new order for {quantity} {pair_or_coin} ---")
+        print(f"--- Placing a new order for {quantity} {pair_or_coin} ---")
 
         # 1. Determine the full pair name
         pair = f"{pair_or_coin}/USD" if "/" not in pair_or_coin else pair_or_coin
@@ -172,13 +165,12 @@ class roostooAPI:
         try:
             response = requests.post(self.PLACE_ORDER_URL, headers=headers, data=total_params)
             response.raise_for_status()
-            print(f"API Response: {response.json()}")
+            print(f"Success!")
             return response.json()
         except requests.exceptions.RequestException as e:
             print(f"Error placing order: {e}")
             print(f"Response text: {e.response.text if e.response else 'N/A'}")
             return None
-
 
     def query_order(self, order_id=None, pair=None, pending_only=None):
         """Queries orders. (Auth: RCL_TopLevelCheck)"""
@@ -206,7 +198,6 @@ class roostooAPI:
             print(f"Response text: {e.response.text if e.response else 'N/A'}")
             return None
 
-
     def cancel_order(self, order_id=None, pair=None):
         """Cancels orders. (Auth: RCL_TopLevelCheck)"""
         payload = {}
@@ -228,7 +219,6 @@ class roostooAPI:
             print(f"Response text: {e.response.text if e.response else 'N/A'}")
             return None
 
-
     def get_all_ticker_id(self):
         """Get all ticker ids."""
         resp = self.get_ticker()
@@ -237,6 +227,19 @@ class roostooAPI:
             return list(data.keys())
         else:
             print(f"Failed to get ticker id from API! Error: {resp['ErrMsg']}")
+            return None
+
+    def get_pair_info(self, pair):
+        """
+        Get coin info.
+        :returns: The pair's PricePrecision, AmountPrecision, MiniOrder
+        """
+        exchange = self.get_exchange_info()
+        pair_info = exchange["TradePairs"].get(pair, None)
+        if pair_info is not None:
+            return int(pair_info["PricePrecision"]), int(pair_info["AmountPrecision"]), int(pair_info["MiniOrder"])
+        else:
+            print(f"{pair} does not exist on Roostoo.")
             return None
 
 
