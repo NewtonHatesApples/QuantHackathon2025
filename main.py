@@ -180,7 +180,7 @@ class SentimentTradingStrategy:
         }
 
         try:
-            response = requests.post("https://api.x.ai/v1/chat/completions", headers=headers, json=data, timeout=60)
+            response = requests.post("https://api.x.ai/v1/chat/completions", headers=headers, json=data, timeout=120)
             response.raise_for_status()
             result = response.json()
             scores_str = result['choices'][0]['message']['content']
