@@ -3,8 +3,9 @@ import os
 import requests
 import xml.etree.ElementTree as ET
 import json
-from bs4 import BeautifulSoup
+import random
 
+from bs4 import BeautifulSoup
 from roostoo_api import roostooAPI
 from binance_api import cryptoAPI  # We'll use this for potential real-market reference if needed, but mainly roostoo for trading
 
@@ -98,18 +99,29 @@ class SentimentTradingStrategy:
         self.sell_proportion = sell_proportion  # To be tuned
         self.buy_proportion = buy_proportion  # To be tuned
 
+        self.user_agents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/118.0',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/118.0',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/119.0.0.0',
+        ]
+
         self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
             'Accept-Language': 'en-US,en;q=0.9',
-            'Referer': 'https://www.google.com/',
+            'Referer': 'https://www.google.com/search?q=coindesk',
             'Connection': 'keep-alive',
         }
 
     def get_latest_news(self):
-        url = "https://news.bitcoin.com/feed/"  # Changed to Bitcoin.com to avoid issues
+        url = "https://www.coindesk.com/arc/outboundfeeds/rss/?outputType=xml"
+        headers = self.headers.copy()
+        headers['User-Agent'] = random.choice(self.user_agents)
         try:
-            response = requests.get(url, headers=self.headers)
+            response = requests.get(url, headers=headers)
             response.raise_for_status()
             root = ET.fromstring(response.content)
             items = []
@@ -121,12 +133,14 @@ class SentimentTradingStrategy:
                 items.append({"title": title, "link": link, "description": description, "pubdate": pubdate})
             return items
         except Exception as e:
-            print(f"Error fetching news from Bitcoin.com: {e}")
+            print(f"Error fetching news from CoinDesk: {e}")
             return []
 
     def get_article_content(self, url):
+        headers = self.headers.copy()
+        headers['User-Agent'] = random.choice(self.user_agents)
         try:
-            response = requests.get(url, headers=self.headers)
+            response = requests.get(url, headers=headers)
             response.raise_for_status()
             soup = BeautifulSoup(response.text, 'html.parser')
             paragraphs = soup.find_all('p')
