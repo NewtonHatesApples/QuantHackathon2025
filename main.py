@@ -239,7 +239,7 @@ class SentimentTradingStrategy:
                     if price == 0.0:
                         continue
 
-                    if score < self.sell_threshold and current_amount > 0:
+                    if score <= self.sell_threshold and current_amount > 0:
                         sell_qty = round(current_amount * self.sell_proportion, amount_precision)
                         if sell_qty * price >= mini_order:
                             print(f"Selling {sell_qty} of {base} due to low sentiment ({score}).")
@@ -247,7 +247,7 @@ class SentimentTradingStrategy:
                         else:
                             print(f"NOT buying {sell_qty} of {base} because order total amount too low.")
 
-                    elif score > self.buy_threshold and usd_balance > 0:
+                    elif score >= self.buy_threshold and usd_balance > 0:
                         spend_amount = usd_balance * self.buy_proportion
                         buy_qty = round(spend_amount / price, amount_precision)
                         if buy_qty * price >= mini_order:
