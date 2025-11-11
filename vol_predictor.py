@@ -303,7 +303,7 @@ def main():
     predictor.calibrate_models_from_data()
 
     # Step 3: Generate 30-day volatility forecasts
-    forecasts = predictor.generate_volatility_forecasts(horizon_days=1, n_simulations=1000)
+    forecasts = predictor.generate_volatility_forecasts(horizon_days=1, n_simulations=100)
 
     # Step 4: Create summary and diagnostics
     summary_df = predictor.get_forecast_summary()

@@ -90,9 +90,17 @@ def comprehensive_volatility_analysis(df):
 
     return df, volatility_metrics
 
+common_bases = ['AAVE', 'ADA', 'APT', 'ARB', 'ASTER', 'AVAX', 'AVNT', 'BNB', 'BONK', 'BTC',
+    'CRV', 'DOGE', 'DOT', 'EIGEN', 'ENA', 'ETH', 'FET', 'FIL', 'FLOKI', 'HBAR',
+    'ICP', 'LINK', 'LTC', 'NEAR', 'ONDO', 'PAXG', 'PENGU', 'PEPE', 'POL', 'PUMP',
+    'S', 'SHIB', 'SOL', 'SUI', 'TRUMP', 'UNI', 'VIRTUAL', 'WIF', 'WLD', 'WLFI',
+    'XLM', 'XRP', 'ZEC', 'ZEN']
 
 def df_getter():
-    ucoin_list = []
+    #ucoin_list = []
+    coin_list = [base + '/USD' for base in common_bases]  # Use filtered Roostoo-style pairs
+    ucoin_list = [i.replace("USD", "USDT") for i in coin_list]
+
     for i in coin_list:
         i = i.replace("USD", "USDT")
         ucoin_list.append(i)
@@ -100,7 +108,7 @@ def df_getter():
     # Dictionary that has the key as the ticker of the coin and the value to be the dataframe of its historical data
     data_dict = {}
     for coin in ucoin_list:
-        data = convert_to_df(api.get_historical_data(coin, start_date='2024-11-10', end_date='2025-11-10', interval='1d'))
+        data = convert_to_df(api.get_historical_data(coin, start_date='2024-11-10', interval='1d'))
         data_dict[coin] = data
 
     # Putting into new dictionary
