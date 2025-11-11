@@ -7,12 +7,15 @@ import random
 
 from bs4 import BeautifulSoup
 from roostoo_api import roostooAPI
-from binance_api import cryptoAPI  # We'll use this for potential real-market reference if needed, but mainly roostoo for trading
+from binance_api import cryptoAPI
+from vol_predictor import CryptoVolatilityPredictor
+from datetime import datetime, timedelta
+from dateutil.parser import parse
+from dateutil.tz import tzutc
 
 
 class SentimentTradingStrategy:
-    def __init__(self, interval_seconds=10, sell_threshold=-0.6, buy_threshold=0.6, sell_proportion=0.8,
-                 buy_proportion=0.01):
+    def __init__(self, interval_seconds=10, sell_threshold=-0.6, buy_threshold=0.6, sell_proportion=0.8):
         self.api = roostooAPI()
         self.binance_api = cryptoAPI()  # Initialized with Binance, can be used for real data if needed
 
@@ -20,7 +23,7 @@ class SentimentTradingStrategy:
         if self.cryptos is None or len(self.cryptos) != 66:
             raise ValueError("Could not retrieve the 66 cryptos from Roostoo API or incorrect count.")
 
-        self.bases = [pair.split('/')[0] for pair in self.cryptos]
+        self.bases = [pair.split('/')[0] for pair in self.cryptos]  # Modify this for volatility and market cap filtering
 
         # Updated mapping of crypto symbols to their common full names (lowercased) for sentiment analysis
         self.crypto_names = {
@@ -97,7 +100,6 @@ class SentimentTradingStrategy:
         self.sell_threshold = sell_threshold  # To be tuned
         self.buy_threshold = buy_threshold  # To be tuned
         self.sell_proportion = sell_proportion  # To be tuned
-        self.buy_proportion = buy_proportion  # To be tuned
 
         self.user_agents = [
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
@@ -115,6 +117,17 @@ class SentimentTradingStrategy:
             'Referer': 'https://www.google.com/search?q=coindesk',
             'Connection': 'keep-alive',
         }
+
+    @staticmethod
+    def rank(ratios: dict) -> dict:
+        length = len(ratios)
+        assert length > 1
+        ratios = sorted(ratios, key=lambda x: ratios[x])
+        ranks = [i / length for i in range(1, length + 1)]
+        return_dict = {}
+        for x, y in zip(ratios, ranks):
+            return_dict[x] = y
+        return return_dict
 
     def get_latest_news(self):
         url = "https://www.coindesk.com/arc/outboundfeeds/rss/?outputType=xml"
@@ -163,7 +176,7 @@ class SentimentTradingStrategy:
         }
 
         data = {
-            "model": "grok-4",
+            "model": "grok-4-fast-reasoning",
             "messages": [
                 {
                     "role": "system",
@@ -196,11 +209,27 @@ class SentimentTradingStrategy:
                 print(f"Response: {e.response.text if e.response else 'N/A'}")
             return {b: 0.0 for b in bases}
 
+    def get_volatilities(self) -> dict:
+        predictor = CryptoVolatilityPredictor()
+        predictor.load_existing_data()
+        predictor.calibrate_models_from_data()
+        res = predictor.generate_volatility_forecasts(horizon_days=1, n_simulations=1000)
+        return res
+
     def run(self):
         print("Starting sentiment-based trading strategy on Roostoo with LLM sentiment analysis...")
         while True:
             items = self.get_latest_news()
-            new_items = [i for i in items if i['link'] not in self.seen_links]
+            current_time = datetime.now(tzutc())
+            recent_items = []
+            for i in items:
+                try:
+                    pub_date = parse(i['pubdate'])
+                    if abs(current_time - pub_date) <= timedelta(minutes=2):
+                        recent_items.append(i)
+                except Exception as e:
+                    print(f"Error parsing pubdate for item {i['title']}: {e}")
+            new_items = [i for i in recent_items if i['link'] not in self.seen_links]
 
             for item in new_items:
                 title = item['title']
@@ -248,11 +277,13 @@ class SentimentTradingStrategy:
                             print(f"NOT buying {sell_qty} of {base} because order total amount too low.")
 
                     elif score >= self.buy_threshold and usd_balance > 0:
-                        spend_amount = usd_balance * self.buy_proportion
+                        vol_rank_dict = self.rank(self.get_volatilities())
+                        spend_amount = usd_balance * 0.1 * vol_rank_dict[base] * score
                         buy_qty = round(spend_amount / price, amount_precision)
                         if buy_qty * price >= mini_order:
+                            sell_price = price * 1.1
                             print(f"Buying {buy_qty} of {base} due to high sentiment ({score}).")
-                            self.api.place_order(base, 'BUY', buy_qty, order_type='MARKET')
+                            self.api.place_order(base, 'BUY', buy_qty, order_type='LIMIT', price=sell_price)
                         else:
                             print(f"NOT buying {buy_qty} of {base} because order total amount too low.")
 
@@ -261,5 +292,5 @@ class SentimentTradingStrategy:
 
 
 if __name__ == "__main__":
-    strategy = SentimentTradingStrategy()  # Adjust parameters as needed
+    strategy = SentimentTradingStrategy(interval_seconds=10, sell_threshold=-0.25, buy_threshold=0.25, sell_proportion=1)  # Adjust parameters as needed
     strategy.run()

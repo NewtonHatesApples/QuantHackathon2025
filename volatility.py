@@ -100,7 +100,7 @@ def df_getter():
     # Dictionary that has the key as the ticker of the coin and the value to be the dataframe of its historical data
     data_dict = {}
     for coin in ucoin_list:
-        data = convert_to_df(api.get_historical_data(coin, start_date='2024-11-10', end_date='2025-11-10', interval='15m'))
+        data = convert_to_df(api.get_historical_data(coin, start_date='2024-11-10', end_date='2025-11-10', interval='1d'))
         data_dict[coin] = data
 
     # Putting into new dictionary
@@ -110,7 +110,6 @@ def df_getter():
     # new_data_dict : Key: Ticker, Value: DataFrame with the ticker's OHLCV, Daily Return, 7 day volatility and 14 day volatility
     # metrics_df : Rows: Analytics of rolling volatility, Columns: Ticker
     for key, value in data_dict.items():
-        print(key, '\n', value)
         new_data, metrics = comprehensive_volatility_analysis(value)
         metrics_dict[key] = metrics
         new_data_dict[key] = new_data
@@ -337,6 +336,7 @@ def plot_selected_tickers_volatility(new_data_dict, selected_tickers, figsize=(1
     plt.tight_layout()
     plt.show()
 
+metrics_df, new_data_dict = df_getter()
 
 if __name__ == "__main__":
     # Get the data first
