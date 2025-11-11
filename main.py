@@ -120,6 +120,7 @@ class SentimentTradingStrategy:
         self.headers = {
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
             'Accept-Language': 'en-US,en;q=0.9',
+            'Referer': 'https://www.google.com/search?q=coindesk',
             'Connection': 'keep-alive',
         }
 
@@ -162,7 +163,6 @@ class SentimentTradingStrategy:
     def get_article_content(self, url):
         headers = self.headers.copy()
         headers['User-Agent'] = random.choice(self.user_agents)
-        headers['Referer'] = 'https://www.coindesk.com/'  # Updated referer to CoinDesk's own site
         try:
             response = requests.get(url, headers=headers)
             response.raise_for_status()
@@ -178,8 +178,8 @@ class SentimentTradingStrategy:
         """
         Use xAI Grok API for sentiment analysis.
         """
-        system_prompt = "You are a low market cap crypto sentiment analyst. Respond only with a JSON object where keys are cryptocurrency symbols and values are sentiment scores from -1 to 1."
-        user_prompt = f"Analyze this crypto news for sentiment impact on these cryptocurrencies: {', '.join(bases)} (with names: {', '.join([self.crypto_names.get(b, b) for b in bases])}).\n\nTitle: {title}\n\nContent: {content}\n\nFor each symbol, score from -1 (very negative) to 1 (very positive) based on potential price impact. 0 if unrelated."
+        system_prompt = "You are a crypto sentiment analyst specialized in high volatility cryptos. Respond only with a JSON object where keys are cryptocurrency symbols and values are sentiment scores from -1 to 1."
+        user_prompt = f"By thinking about relations between the news and the crypto deeply, analyze this crypto news for sentiment impact on these cryptocurrencies: {', '.join(bases)} (with names: {', '.join([self.crypto_names.get(b, b) for b in bases])}).\n\nTitle: {title}\n\nContent: {content}\n\nFor each symbol, score from -1 (very negative) to 1 (very positive) based on potential price impact. 0 if unrelated."
 
         headers = {
             "Authorization": f"Bearer {os.environ.get('XAI_API_KEY')}",
@@ -248,7 +248,7 @@ class SentimentTradingStrategy:
             for i in items:
                 try:
                     pub_date = parse(i['pubdate'])
-                    if abs(current_time - pub_date) <= timedelta(minutes=60):
+                    if abs(current_time - pub_date) <= timedelta(minutes=120):
                         recent_items.append(i)
                 except Exception as e:
                     print(f"Error parsing pubdate for item {i['title']}: {e}")
@@ -307,7 +307,7 @@ class SentimentTradingStrategy:
                         spend_amount = usd_balance * 0.1 * self.vol_rank_dict[base + '/USDT'] * score
                         buy_qty = round(spend_amount / price, amount_precision)
                         if buy_qty * price >= mini_order:
-                            sell_price = price * 1.075
+                            sell_price = round(price * 1.075, price_precision)
                             print(f"Buying {buy_qty} of {base} due to high sentiment ({score}).")
                             self.api.place_order(base, 'BUY', buy_qty, order_type='LIMIT', price=sell_price)
                         else:
@@ -318,5 +318,9 @@ class SentimentTradingStrategy:
 
 
 if __name__ == "__main__":
-    strategy = SentimentTradingStrategy(interval_seconds=10, sell_threshold=-0.25, buy_threshold=0.25, sell_proportion=1)  # Adjust parameters as needed
+    roostoo = roostooAPI()
+    roostoo.get_balance()
+    roostoo.place_order("PEPE/USD", "BUY", 777777777, order_type='LIMIT', price=0.00000621)
+    strategy = SentimentTradingStrategy(interval_seconds=10, sell_threshold=-0.5, buy_threshold=0.5, sell_proportion=1)  # Adjust parameters as needed
     strategy.run()
+    
