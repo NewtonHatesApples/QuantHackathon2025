@@ -248,7 +248,7 @@ class SentimentTradingStrategy:
             for i in items:
                 try:
                     pub_date = parse(i['pubdate'])
-                    if abs(current_time - pub_date) <= timedelta(minutes=120):
+                    if abs(current_time - pub_date) <= timedelta(minutes=30):
                         recent_items.append(i)
                 except Exception as e:
                     print(f"Error parsing pubdate for item {i['title']}: {e}")

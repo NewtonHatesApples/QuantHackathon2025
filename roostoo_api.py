@@ -39,11 +39,7 @@ class roostooAPI:
         total_params = "&".join(f"{key}={payload[key]}" for key in sorted_keys)
 
         # 3. Create HMAC-SHA256 signature
-        signature = hmac.new(
-            self.__SECRET_KEY.encode('utf-8'),
-            total_params.encode('utf-8'),
-            hashlib.sha256
-        ).hexdigest()
+        signature = hmac.new(self.__SECRET_KEY.encode('utf-8'), total_params.encode('utf-8'), hashlib.sha256).hexdigest()
 
         # 4. Create headers
         headers = {
