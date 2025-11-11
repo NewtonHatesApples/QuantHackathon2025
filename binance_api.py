@@ -4,7 +4,7 @@ from dateutil.relativedelta import relativedelta
 
 
 class cryptoAPI:
-    def __init__(self, exchange_name='binance'):
+    def __init__(self, exchange_name='binanceus'):
         """
         Initialize the API with a specific exchange.
         :param exchange_name: Name of the exchange (e.g., 'binance', 'coinbase', etc.)
