@@ -11,7 +11,7 @@ from roostoo_api import roostooAPI
 coin_list = roostooAPI().get_all_ticker_id()
 
 # Initializing the code provided by our goat
-api = cryptoAPI('binance')
+api = cryptoAPI()
 
 
 def convert_to_df(data: list[list]) -> pd.DataFrame:
